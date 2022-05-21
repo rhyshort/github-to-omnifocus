@@ -29,10 +29,16 @@ type GHDesiredState struct {
 func main() {
 	log.Printf("[main] Starting github2omnifocus; version: %s.", Version)
 
-	c, err := internal.LoadConfig()
+	c, err := internal.LoadConfig2()
 	if err != nil {
 		log.Fatal(err)
 	}
+	for _, v := range c {
+		sync_github(v)
+	}
+}
+
+func sync_github(c internal.GithubConfig) {
 
 	// The due date we use is "end of today"
 	dueDate := time.Now().Local()

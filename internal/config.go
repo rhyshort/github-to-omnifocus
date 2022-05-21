@@ -9,7 +9,9 @@ import (
 	"path"
 )
 
-type Config struct {
+type Config = map[string]GithubConfig
+
+type GithubConfig struct {
 	// API URL for GitHub
 	APIURL string
 	// Personal Access token
@@ -33,10 +35,10 @@ type Config struct {
 }
 
 // LoadConfig loads JSON config from ~/.config/github2omnifocus/config.json
-func LoadConfig() (Config, error) {
+func LoadConfig2() (Config, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return Config{}, fmt.Errorf("could not find home dir: %v", err)
+		return make(Config), fmt.Errorf("could not find home dir: %v", err)
 	}
 
 	configFile := os.Getenv("G2O_CONFIG")
@@ -48,36 +50,29 @@ func LoadConfig() (Config, error) {
 	var bytes []byte
 	bytes, err = ioutil.ReadFile(configPath)
 	if err != nil {
-		return Config{}, fmt.Errorf("expected config.json at %s: %v", configPath, err)
+		return make(Config), fmt.Errorf("expected config.json at %s: %v", configPath, err)
 	}
 
-	c := Config{
-		APIURL:                  "https://api.github.com",
-		AppTag:                  "github",
-		AssignedProject:         "GitHub Assigned",
-		AssignedTag:             "assigned",
-		ReviewProject:           "GitHub Reviews",
-		ReviewTag:               "review",
-		NotificationsProject:    "GitHub Notifications",
-		NotificationTag:         "notification",
-		SetNotificationsDueDate: true,
-	}
+	c := make(Config)
 	err = json.Unmarshal(bytes, &c)
 	if err != nil {
-		return Config{}, fmt.Errorf("error unmarshalling config JSON from %s: %v", configPath, err)
+		return c, fmt.Errorf("error unmarshalling config JSON from %s: %v", configPath, err)
 	}
 
 	log.Printf("Config loaded from %s:", configPath)
-	log.Printf("  GitHub API server: %s", c.APIURL)
-	if c.AccessToken != "" {
-		log.Printf("  GitHub token: *****")
-	} else {
-		log.Printf("  GitHub token: <none, likely error!>")
+
+	for _, v := range c {
+		log.Printf("  GitHub API server: %s", v.APIURL)
+		if v.AccessToken != "" {
+			log.Printf("  GitHub token: *****")
+		} else {
+			log.Printf("  GitHub token: <none, likely error!>")
+		}
+		log.Printf("  Omnifocus tag: %s", v.AppTag)
+		log.Printf("  Omnifocus assigned issue project: %s", v.AssignedProject)
+		log.Printf("  Omnifocus PR to review project: %s", v.ReviewProject)
+		log.Printf("  Omnifocus notifications project: %s", v.NotificationsProject)
 	}
-	log.Printf("  Omnifocus tag: %s", c.AppTag)
-	log.Printf("  Omnifocus assigned issue project: %s", c.AssignedProject)
-	log.Printf("  Omnifocus PR to review project: %s", c.ReviewProject)
-	log.Printf("  Omnifocus notifications project: %s", c.NotificationsProject)
 
 	return c, nil
 }
