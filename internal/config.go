@@ -38,7 +38,12 @@ func LoadConfig() (Config, error) {
 	if err != nil {
 		return Config{}, fmt.Errorf("could not find home dir: %v", err)
 	}
-	configPath := path.Join(home, ".config", "github2omnifocus", "config.json")
+
+	configFile := os.Getenv("G2O_CONFIG")
+	if configFile == "" {
+		configFile = "config.json"
+	}
+	configPath := path.Join(home, ".config", "github2omnifocus", configFile)
 
 	var bytes []byte
 	bytes, err = ioutil.ReadFile(configPath)
