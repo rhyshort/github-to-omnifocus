@@ -103,10 +103,12 @@ func (og *Gateway) GetNotifications() ([]Task, error) {
 
 func (og *Gateway) AddIssue(t gh.GitHubItem) error {
 	log.Printf("AddIssue: %s", t)
+	tags := []string{og.AppTag, og.AssignedTag}
+	tags = append(tags, t.Labels...)
 	_, err := AddNewOmnifocusTask(NewOmnifocusTask{
 		ProjectName: og.AssignedProject,
 		Name:        t.Key() + " " + t.Title,
-		Tags:        []string{og.AppTag, og.AssignedTag},
+		Tags:        tags,
 		Note:        t.HTMLURL,
 	})
 	if err != nil {
@@ -117,10 +119,12 @@ func (og *Gateway) AddIssue(t gh.GitHubItem) error {
 
 func (og *Gateway) AddPR(t gh.GitHubItem) error {
 	log.Printf("AddPR: %s", t)
+	tags := []string{og.AppTag, og.ReviewTag}
+	tags = append(tags, t.Labels...)
 	_, err := AddNewOmnifocusTask(NewOmnifocusTask{
 		ProjectName: og.ReviewProject,
 		Name:        t.Key() + " " + t.Title,
-		Tags:        []string{og.AppTag, og.ReviewTag},
+		Tags:        tags,
 		Note:        t.HTMLURL,
 	})
 	if err != nil {

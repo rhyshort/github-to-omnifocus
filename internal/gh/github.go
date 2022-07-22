@@ -25,6 +25,7 @@ type GitHubItem struct {
 	HTMLURL string
 	APIURL  string
 	K       string
+	Labels  []string
 }
 
 func (item GitHubItem) String() string {
@@ -86,11 +87,16 @@ func (ghg *GitHubGateway) GetIssues() ([]GitHubItem, error) {
 
 	items := []GitHubItem{}
 	for _, issue := range issues {
+		labels := []string{}
+		for _, label := range issue.Labels {
+			labels = append(labels, *label.Name)
+		}
 		item := GitHubItem{
 			Title:   strings.TrimSpace(issue.GetTitle()),
 			HTMLURL: issue.GetHTMLURL(),
 			APIURL:  issue.GetURL(),
 			K:       fmt.Sprintf("%s#%d", issue.GetRepository().GetFullName(), issue.GetNumber()),
+			Labels:  labels,
 		}
 		items = append(items, item)
 	}
@@ -124,11 +130,16 @@ func (ghg *GitHubGateway) GetPRs() ([]GitHubItem, error) {
 
 	items := []GitHubItem{}
 	for _, issue := range issues {
+		labels := []string{}
+		for _, label := range issue.Labels {
+			labels = append(labels, *label.Name)
+		}
 		item := GitHubItem{
 			Title:   strings.TrimSpace(issue.GetTitle()),
 			HTMLURL: issue.GetHTMLURL(),
 			APIURL:  issue.GetURL(),
 			K:       fmt.Sprintf("%s#%d", issue.GetRepository().GetFullName(), issue.GetNumber()),
+			Labels:  labels,
 		}
 		items = append(items, item)
 	}

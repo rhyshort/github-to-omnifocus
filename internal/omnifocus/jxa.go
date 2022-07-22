@@ -84,7 +84,7 @@ func executeScript(jsCode []byte, args []byte) ([]byte, error) {
 	// passed into osascript via stdin. The script outputs
 	// a JSON document over stdout.
 
-	cmd := exec.Command("/usr/bin/osascript", "-l", "JavaScript")
+	cmd := exec.Command("/usr/bin/osascript", "-l", "JavaScript", "-s", "o")
 
 	cmd.Env = append(os.Environ(),
 		"OSA_ARGS="+string(args),
