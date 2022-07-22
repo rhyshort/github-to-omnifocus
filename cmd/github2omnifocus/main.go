@@ -62,6 +62,8 @@ func sync_github(c internal.GithubConfig) {
 		NotificationTag:         c.NotificationTag,
 		NotificationsProject:    c.NotificationsProject,
 		SetNotificationsDueDate: c.SetNotificationsDueDate,
+		SetTaskmasterDueDate:    c.SetTaskmasterDueDate,
+		TaskMasterTaskTag:       c.TaskMasterTaskTag,
 		DueDate:                 dueDate,
 	}
 	ghg, err := gh.NewGitHubGateway(context.Background(), c.AccessToken, c.APIURL)

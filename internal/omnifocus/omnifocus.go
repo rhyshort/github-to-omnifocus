@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -65,6 +66,8 @@ type Gateway struct {
 	NotificationTag         string
 	NotificationsProject    string
 	SetNotificationsDueDate bool
+	SetTaskmasterDueDate    bool
+	TaskMasterTaskTag       string
 	DueDate                 time.Time
 }
 
@@ -105,16 +108,76 @@ func (og *Gateway) AddIssue(t gh.GitHubItem) error {
 	log.Printf("AddIssue: %s", t)
 	tags := []string{og.AppTag, og.AssignedTag}
 	tags = append(tags, t.Labels...)
-	_, err := AddNewOmnifocusTask(NewOmnifocusTask{
+
+	task := NewOmnifocusTask{
 		ProjectName: og.AssignedProject,
 		Name:        t.Key() + " " + t.Title,
 		Tags:        tags,
 		Note:        t.HTMLURL,
-	})
+	}
+
+	if og.SetTaskmasterDueDate && og.isTaskMasterTask(task) {
+		// attempt to set a TM due date
+		deadline, err := og.deadline(tags)
+		if err == nil {
+			task.DueDateMS = deadline
+		}
+	}
+
+	_, err := AddNewOmnifocusTask(task)
 	if err != nil {
 		return fmt.Errorf("error adding task: %v", err)
 	}
 	return nil
+}
+
+func (og *Gateway) isTaskMasterTask(task NewOmnifocusTask) bool {
+	for _, tag := range task.Tags {
+		if strings.EqualFold(tag, og.TaskMasterTaskTag) {
+			return true
+		}
+	}
+	return false
+}
+
+func (og *Gateway) deadline(tags []string) (int64, error) {
+	// generic place in the year
+	priorityOrderSuffix := []string{"H", "Q", "W"}
+
+	// tm months
+	arrowMonthAbbrv := []string{
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+	}
+
+	isTimeRange := func(tag string) bool {
+		for _, suffix := range priorityOrderSuffix {
+			if strings.HasSuffix(tag, suffix) {
+				return true
+			}
+		}
+		return false
+	}
+
+	isMonth := func(tag string) (bool, time.Month) {
+		for idx, month := range arrowMonthAbbrv {
+			if strings.EqualFold(month, tag) {
+				return true, time.Month(idx)
+			}
+		}
+		return false, time.January
+	}
+
+	for _, tag := range tags {
+		if isTimeRange(tag) {
+			return getEndOfTimePeriod(tag)
+		}
+
+		if res, month := isMonth(tag); res {
+			return getEndOfMonth(month), nil
+		}
+	}
+	return -1, fmt.Errorf("No deadline present! tags: %v", tags)
+
 }
 
 func (og *Gateway) AddPR(t gh.GitHubItem) error {
@@ -176,4 +239,34 @@ func (og *Gateway) CompleteNotification(t Task) error {
 		return fmt.Errorf("error completing task: %v", err)
 	}
 	return nil
+}
+
+func getEndOfTimePeriod(period string) (int64, error) {
+	t := time.Now()
+
+	suffix := period[len(period)-1:]
+	num, err := strconv.Atoi(period[:len(period)-1])
+	if err != nil {
+		return -1, err
+	}
+
+	switch suffix {
+	case "H":
+		month := (6 * num) + 1
+		return time.Date(t.Year(), time.Month(month), 1, -1, -1, -1, -1, time.Local).UnixMilli(), nil
+	case "Q":
+		month := (3 * num) + 1
+		return time.Date(t.Year(), time.Month(month), 1, -1, -1, -1, -1, time.Local).UnixMilli(), nil
+	case "W":
+		day := (7 * num) + 1
+		//TODO: adjust time for work days
+		return time.Date(t.Year(), time.January, day, -1, -1, -1, -1, time.Local).UnixMilli(), nil
+
+	}
+	return -1, fmt.Errorf("Failed to calculate time increment")
+}
+
+func getEndOfMonth(month time.Month) int64 {
+	t := time.Now()
+	return time.Date(t.Year(), month+1, 1, -1, -1, -1, -1, time.Local).UnixMilli()
 }

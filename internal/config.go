@@ -32,6 +32,10 @@ type GithubConfig struct {
 	NotificationTag string
 	// True if due date of today should be set on notifications
 	SetNotificationsDueDate bool
+	// True if app should attempt to set correct deadline for Task master apps
+	SetTaskmasterDueDate bool
+	// Tag used to id task master task
+	TaskMasterTaskTag string
 }
 
 // LoadConfig loads JSON config from ~/.config/github2omnifocus/config.json
