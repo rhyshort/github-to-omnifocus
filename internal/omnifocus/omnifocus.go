@@ -18,8 +18,9 @@ var (
 
 // Task represents a task existing in Omnifocus
 type Task struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Completed bool   `json:"completed"`
 }
 
 func (t Task) String() string {

@@ -49,7 +49,15 @@ function tasksForProjectWithTag(
     // const ofAppTag = tagFoundOrCreated(appTag)
     // const ofTypeTag = tagFoundOrCreated(typeTag)
 
-    return project.tasks()
+    // tasks is an array each task then has child tasks
+
+    let tasks = project.tasks()
+    project.tasks().forEach(task =>{
+        tasks = tasks.concat(getChildTasks(task))
+    })
+
+    return tasks
+        // removing this filter will give us the completed tasks, so we can then mark them as done in GH(E)
         .filter((task) => task.completed() === false)
         .filter((task) => {
             // Task must have all tags
@@ -62,8 +70,16 @@ function tasksForProjectWithTag(
             return true
         })
         .map((task) => {
-            return { "id": task.id(), "name": task.name() };
+            return { "id": task.id(), "name": task.name(), "completed": task.completed() };
         });
+}
+
+function getChildTasks(parent) {
+    let all_tasks = parent.tasks()
+    parent.tasks().forEach(t => {
+        all_tasks = all_tasks.concat(getChildTasks(t))
+    });
+    return all_tasks;
 }
 
 ObjC.import('stdlib')
