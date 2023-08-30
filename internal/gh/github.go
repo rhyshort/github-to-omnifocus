@@ -26,6 +26,7 @@ type GitHubItem struct {
 	APIURL  string
 	K       string
 	Labels  []string
+	Repo    string
 }
 
 func (item GitHubItem) String() string {
@@ -97,6 +98,7 @@ func (ghg *GitHubGateway) GetIssues() ([]GitHubItem, error) {
 			APIURL:  issue.GetURL(),
 			K:       fmt.Sprintf("%s#%d", issue.GetRepository().GetFullName(), issue.GetNumber()),
 			Labels:  labels,
+			Repo:    issue.Repository.GetFullName(),
 		}
 		items = append(items, item)
 	}
@@ -140,6 +142,7 @@ func (ghg *GitHubGateway) GetPRs() ([]GitHubItem, error) {
 			APIURL:  issue.GetURL(),
 			K:       fmt.Sprintf("%s#%d", issue.GetRepository().GetFullName(), issue.GetNumber()),
 			Labels:  labels,
+			Repo:    issue.Repository.GetFullName(),
 		}
 		items = append(items, item)
 	}

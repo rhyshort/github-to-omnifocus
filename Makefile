@@ -1,6 +1,6 @@
 .PHONY: build run test
 
-PROJECT_VERSION=v2.7
+PROJECT_VERSION=v2.8
 
 run: build
 	./github2omnifocus

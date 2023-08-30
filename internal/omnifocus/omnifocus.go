@@ -185,6 +185,7 @@ func (og *Gateway) AddPR(t gh.GitHubItem) error {
 	log.Printf("AddPR: %s", t)
 	tags := []string{og.AppTag, og.ReviewTag}
 	tags = append(tags, t.Labels...)
+	tags = append(tags, t.Repo)
 	_, err := AddNewOmnifocusTask(NewOmnifocusTask{
 		ProjectName: og.ReviewProject,
 		Name:        t.Key() + " " + t.Title,
@@ -202,7 +203,7 @@ func (og *Gateway) AddNotification(t gh.GitHubItem) error {
 	newT := NewOmnifocusTask{
 		ProjectName: og.NotificationsProject,
 		Name:        t.Key() + " " + t.Title,
-		Tags:        []string{og.AppTag, og.NotificationTag},
+		Tags:        []string{og.AppTag, og.NotificationTag, t.Repo},
 		Note:        t.HTMLURL,
 	}
 	if og.SetNotificationsDueDate {
