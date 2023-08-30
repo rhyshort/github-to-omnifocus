@@ -107,7 +107,7 @@ func (og *Gateway) GetNotifications() ([]Task, error) {
 
 func (og *Gateway) AddIssue(t gh.GitHubItem) error {
 	log.Printf("AddIssue: %s", t)
-	tags := []string{og.AppTag, og.AssignedTag}
+	tags := []string{og.AppTag, og.AssignedTag, t.Repo}
 	tags = append(tags, t.Labels...)
 
 	task := NewOmnifocusTask{
