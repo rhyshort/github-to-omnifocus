@@ -156,6 +156,7 @@ func toSetGH(l []gh.GitHubItem) map[delta.Keyed]struct{} {
 			APIURL:  i.APIURL,
 			K:       i.K,
 			Labels:  i.Labels,
+			Repo: i.Repo,
 		}] = struct{}{}
 	}
 	return r

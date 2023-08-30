@@ -98,7 +98,7 @@ func (ghg *GitHubGateway) GetIssues() ([]GitHubItem, error) {
 			APIURL:  issue.GetURL(),
 			K:       fmt.Sprintf("%s#%d", issue.GetRepository().GetFullName(), issue.GetNumber()),
 			Labels:  labels,
-			Repo:    issue.Repository.GetFullName(),
+			Repo:    issue.GetRepository().GetFullName(),
 		}
 		items = append(items, item)
 	}
@@ -142,7 +142,7 @@ func (ghg *GitHubGateway) GetPRs() ([]GitHubItem, error) {
 			APIURL:  issue.GetURL(),
 			K:       fmt.Sprintf("%s#%d", issue.GetRepository().GetFullName(), issue.GetNumber()),
 			Labels:  labels,
-			Repo:    issue.Repository.GetFullName(),
+			Repo:    issue.GetRepository().GetFullName(),
 		}
 		items = append(items, item)
 	}
@@ -235,6 +235,7 @@ func (ghg *GitHubGateway) GetNotifications() ([]GitHubItem, error) {
 			HTMLURL: htmlURL,
 			APIURL:  notification.Subject.GetURL(),
 			K:       fmt.Sprintf("%s/%s#%s", owner, repo, subjectID),
+			Repo:    notification.GetRepository().GetFullName(),
 		}
 		items = append(items, item)
 	}
