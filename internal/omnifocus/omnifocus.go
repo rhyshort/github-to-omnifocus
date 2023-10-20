@@ -70,6 +70,8 @@ type Gateway struct {
 	SetTaskmasterDueDate    bool
 	TaskMasterTaskTag       string
 	DueDate                 time.Time
+	PendingChangesProject   string
+	PendingChangesTag       string
 }
 
 func (og *Gateway) GetIssues() ([]Task, error) {
@@ -87,6 +89,17 @@ func (og *Gateway) GetPRs() ([]Task, error) {
 	tasks, err := TasksForQuery(TaskQuery{
 		ProjectName: og.ReviewProject,
 		Tags:        []string{og.AppTag, og.ReviewTag},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
+}
+
+func (og *Gateway) GetAuthoredPRs() ([]Task, error) {
+	tasks, err := TasksForQuery(TaskQuery{
+		ProjectName: og.PendingChangesProject,
+		Tags:        []string{og.AppTag, og.PendingChangesTag},
 	})
 	if err != nil {
 		return nil, err
@@ -196,6 +209,20 @@ func (og *Gateway) AddPR(t gh.GitHubItem) error {
 		return fmt.Errorf("error adding task: %v", err)
 	}
 	return nil
+}
+
+func (og *Gateway) AddAuthoredPR(t gh.GitHubItem) error {
+	log.Printf("AddAuhtoredPR: %s", t)
+	tags := []string{og.AppTag, og.PendingChangesTag}
+	tags = append(tags, t.Labels...)
+	tags = append(tags, t.Repo)
+	_, err := AddNewOmnifocusTask(NewOmnifocusTask{
+		ProjectName: og.PendingChangesProject,
+		Tags:        tags,
+		Name:        t.Key() + " " + t.Title,
+		Note:        t.HTMLURL,
+	})
+	return err
 }
 
 func (og *Gateway) AddNotification(t gh.GitHubItem) error {

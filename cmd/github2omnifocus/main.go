@@ -18,12 +18,14 @@ type OFCurrentState struct {
 	Issues        []omnifocus.Task
 	PRs           []omnifocus.Task
 	Notifications []omnifocus.Task
+	AuthoredPRs   []omnifocus.Task
 }
 
 type GHDesiredState struct {
 	Issues        []gh.GitHubItem
 	PRs           []gh.GitHubItem
 	Notifications []gh.GitHubItem
+	AuthoredPRs   []gh.GitHubItem
 }
 
 func main() {
@@ -40,15 +42,15 @@ func main() {
 
 func sync_github(c internal.GithubConfig) {
 
-	// The due date we use is "end of today"
+	// The due date we use is "end of today" which is 5pm local.
 	dueDate := time.Now().Local()
 	dueDate = time.Date(
 		dueDate.Year(),
 		dueDate.Month(),
 		dueDate.Day(),
-		23,
-		59,
-		59,
+		17,
+		0,
+		0,
 		0,
 		dueDate.Location())
 
@@ -65,6 +67,8 @@ func sync_github(c internal.GithubConfig) {
 		SetTaskmasterDueDate:    c.SetTaskmasterDueDate,
 		TaskMasterTaskTag:       c.TaskMasterTaskTag,
 		DueDate:                 dueDate,
+		PendingChangesProject:   c.PendingChangesProject,
+		PendingChangesTag:       c.PendingChangesTag,
 	}
 	ghg, err := gh.NewGitHubGateway(context.Background(), c.AccessToken, c.APIURL)
 	if err != nil {
@@ -126,6 +130,24 @@ func sync_github(c internal.GithubConfig) {
 		}
 	}
 
+	d = delta.Delta(toSetGH(desiredState.AuthoredPRs), toSetOF(currentState.AuthoredPRs))
+	log.Printf("Found %d changes to apply to PRs", len(d))
+	for _, d := range d {
+		if d.Type == delta.Add {
+			err := og.AddAuthoredPR(*(d.Item.(*gh.GitHubItem)))
+			if err != nil {
+				// should never fail
+				log.Fatal(err)
+			}
+		} else if d.Type == delta.Remove {
+			err := og.CompletePR(*(d.Item.(*omnifocus.Task)))
+			if err != nil {
+				// should never fail
+				log.Fatal(err)
+			}
+		}
+	}
+
 	d = delta.Delta(toSetGH(desiredState.Notifications), toSetOF(currentState.Notifications))
 	log.Printf("Found %d changes to apply to Notifications", len(d))
 	for _, d := range d {
@@ -156,7 +178,7 @@ func toSetGH(l []gh.GitHubItem) map[delta.Keyed]struct{} {
 			APIURL:  i.APIURL,
 			K:       i.K,
 			Labels:  i.Labels,
-			Repo: i.Repo,
+			Repo:    i.Repo,
 		}] = struct{}{}
 	}
 	return r
@@ -188,6 +210,12 @@ func GetGitHubState(ghg gh.GitHubGateway) (GHDesiredState, error) {
 	if err != nil {
 		return GHDesiredState{}, err
 	}
+
+	ghState.AuthoredPRs, err = ghg.GetOpenPRs()
+	if err != nil {
+		return GHDesiredState{}, err
+	}
+
 	ghState.Notifications, err = ghg.GetNotifications()
 	if err != nil {
 		return GHDesiredState{}, err
@@ -210,6 +238,11 @@ func GetOFState(og omnifocus.Gateway) (OFCurrentState, error) {
 		return OFCurrentState{}, err
 	}
 	ofState.Notifications, err = og.GetNotifications()
+	if err != nil {
+		return OFCurrentState{}, err
+	}
+
+	ofState.AuthoredPRs, err = og.GetAuthoredPRs()
 	if err != nil {
 		return OFCurrentState{}, err
 	}

@@ -36,6 +36,10 @@ type GithubConfig struct {
 	SetTaskmasterDueDate bool
 	// Tag used to id task master task
 	TaskMasterTaskTag string
+	// Project used to show pending code changes ie those I have written
+	PendingChangesProject string
+	// Tag used to id pending code changes ie those I have written
+	PendingChangesTag string
 }
 
 // LoadConfig loads JSON config from ~/.config/github2omnifocus/config.json

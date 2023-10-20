@@ -113,6 +113,21 @@ func (ghg *GitHubGateway) GetPRs() ([]GitHubItem, error) {
 	}
 	query := "type:pr state:open review-requested:" + user.GetLogin()
 
+	return ghg.getPRs(query)
+}
+
+func (ghg *GitHubGateway) GetOpenPRs() ([]GitHubItem, error) {
+	user, _, err := ghg.c.Users.Get(ghg.ctx, "")
+	if err != nil {
+		return nil, err
+	}
+	query := "type:pr state:open archived:false author:" + user.GetLogin()
+
+	return ghg.getPRs(query)
+}
+
+func (ghg *GitHubGateway) getPRs(query string) ([]GitHubItem, error) {
+
 	issues := []*github.Issue{}
 	opt := &github.SearchOptions{
 		ListOptions: github.ListOptions{PerPage: paginationPerPage},
