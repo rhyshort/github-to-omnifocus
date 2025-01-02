@@ -94,7 +94,7 @@ func sync_github(c internal.GithubConfig) {
 	// thing that generics will make easier as we can better smuggle the
 	// types through Delta rather than using the interface.
 
-	d := delta.Delta(toSetGH(desiredState.Issues), toSetOF(currentState.Issues))
+	d := delta.Delta(toSet(desiredState.Issues), toSet(currentState.Issues))
 	log.Printf("Found %d changes to apply to Issues", len(d))
 	for _, d := range d {
 		if d.Type == delta.Add {
@@ -112,7 +112,7 @@ func sync_github(c internal.GithubConfig) {
 		}
 	}
 
-	d = delta.Delta(toSetGH(desiredState.PRs), toSetOF(currentState.PRs))
+	d = delta.Delta(toSet(desiredState.PRs), toSet(currentState.PRs))
 	log.Printf("Found %d changes to apply to PRs", len(d))
 	for _, d := range d {
 		if d.Type == delta.Add {
@@ -130,7 +130,7 @@ func sync_github(c internal.GithubConfig) {
 		}
 	}
 
-	d = delta.Delta(toSetGH(desiredState.AuthoredPRs), toSetOF(currentState.AuthoredPRs))
+	d = delta.Delta(toSet(desiredState.AuthoredPRs), toSet(currentState.AuthoredPRs))
 	log.Printf("Found %d changes to apply to PRs", len(d))
 	for _, d := range d {
 		if d.Type == delta.Add {
@@ -148,7 +148,7 @@ func sync_github(c internal.GithubConfig) {
 		}
 	}
 
-	d = delta.Delta(toSetGH(desiredState.Notifications), toSetOF(currentState.Notifications))
+	d = delta.Delta(toSet(desiredState.Notifications), toSet(currentState.Notifications))
 	log.Printf("Found %d changes to apply to Notifications", len(d))
 	for _, d := range d {
 		if d.Type == delta.Add {
@@ -167,33 +167,19 @@ func sync_github(c internal.GithubConfig) {
 	}
 }
 
-// toSetGH creates a delta.Keyed set from a slice of GitHubItem
-func toSetGH(l []gh.GitHubItem) map[delta.Keyed]struct{} {
-	r := map[delta.Keyed]struct{}{}
-	for _, i := range l {
-		// need to clone because range reuses `i` for each item!
-		r[&gh.GitHubItem{
-			Title:     i.Title,
-			HTMLURL:   i.HTMLURL,
-			APIURL:    i.APIURL,
-			K:         i.K,
-			Labels:    i.Labels,
-			Repo:      i.Repo,
-			Milestone: i.Milestone,
-		}] = struct{}{}
-	}
-	return r
-}
-
-// toSetOF creates a delta.Keyed set from a slice of OmnifocusTask
-func toSetOF(l []omnifocus.Task) map[delta.Keyed]struct{} {
-	r := map[delta.Keyed]struct{}{}
-	for _, i := range l {
-		// need to clone because range reuses `i` for each item!
-		r[&omnifocus.Task{
-			ID:   i.ID,
-			Name: i.Name,
-		}] = struct{}{}
+func toSet[T delta.Keyed](l []T) map[string]T {
+	// using the Key() as the map's hashkey allows for quicker lookup.
+	// Without doing this, we are forced to essentially do the comparison as
+	// a list comparison, looping over one list with an internal loop over the
+	// other list, calling Key() all the time. For notifications in particular,
+	// this can become large quickly: even a 50 item list ends up being in worst
+	// case 2 * 50^2 = 5000 comparisons and Key() calls.
+	// we build this here as it should be the same result as keying it on struct, and flipping
+	// later
+	r := map[string]T{}
+	for index := range l {
+		elem := l[index]
+		r[elem.Key()] = elem
 	}
 	return r
 }
