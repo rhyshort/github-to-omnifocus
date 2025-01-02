@@ -173,12 +173,13 @@ func toSetGH(l []gh.GitHubItem) map[delta.Keyed]struct{} {
 	for _, i := range l {
 		// need to clone because range reuses `i` for each item!
 		r[&gh.GitHubItem{
-			Title:   i.Title,
-			HTMLURL: i.HTMLURL,
-			APIURL:  i.APIURL,
-			K:       i.K,
-			Labels:  i.Labels,
-			Repo:    i.Repo,
+			Title:     i.Title,
+			HTMLURL:   i.HTMLURL,
+			APIURL:    i.APIURL,
+			K:         i.K,
+			Labels:    i.Labels,
+			Repo:      i.Repo,
+			Milestone: i.Milestone,
 		}] = struct{}{}
 	}
 	return r

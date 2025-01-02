@@ -21,12 +21,14 @@ var paginationPerPage = 30
 // PRs and notifications containing only the information the rest of the
 // program requires.
 type GitHubItem struct {
-	Title   string
-	HTMLURL string
-	APIURL  string
-	K       string
-	Labels  []string
-	Repo    string
+	Title     string
+	HTMLURL   string
+	APIURL    string
+	K         string
+	Labels    []string
+	Repo      string
+	ID        string
+	Milestone string
 }
 
 func (item GitHubItem) String() string {
@@ -93,12 +95,13 @@ func (ghg *GitHubGateway) GetIssues() ([]GitHubItem, error) {
 			labels = append(labels, *label.Name)
 		}
 		item := GitHubItem{
-			Title:   strings.TrimSpace(issue.GetTitle()),
-			HTMLURL: issue.GetHTMLURL(),
-			APIURL:  issue.GetURL(),
-			K:       fmt.Sprintf("%s#%d", issue.GetRepository().GetFullName(), issue.GetNumber()),
-			Labels:  labels,
-			Repo:    issue.GetRepository().GetFullName(),
+			Title:     strings.TrimSpace(issue.GetTitle()),
+			HTMLURL:   issue.GetHTMLURL(),
+			APIURL:    issue.GetURL(),
+			K:         fmt.Sprintf("%s#%d", issue.GetRepository().GetFullName(), issue.GetNumber()),
+			Labels:    labels,
+			Repo:      issue.GetRepository().GetFullName(),
+			Milestone: issue.GetMilestone().GetTitle(),
 		}
 		items = append(items, item)
 	}
@@ -162,6 +165,15 @@ func (ghg *GitHubGateway) getPRs(query string) ([]GitHubItem, error) {
 		items = append(items, item)
 	}
 	return items, nil
+}
+
+func (ghg *GitHubGateway) MarkNotificationAsRead(id string) error {
+	_, err := ghg.c.Activity.MarkThreadRead(ghg.ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (ghg *GitHubGateway) GetNotifications() ([]GitHubItem, error) {
@@ -251,6 +263,7 @@ func (ghg *GitHubGateway) GetNotifications() ([]GitHubItem, error) {
 			APIURL:  notification.Subject.GetURL(),
 			K:       fmt.Sprintf("%s/%s#%s", owner, repo, subjectID),
 			Repo:    notification.GetRepository().GetFullName(),
+			ID:      *notification.ID,
 		}
 		items = append(items, item)
 	}

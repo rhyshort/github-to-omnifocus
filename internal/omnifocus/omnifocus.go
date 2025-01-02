@@ -122,6 +122,9 @@ func (og *Gateway) AddIssue(t gh.GitHubItem) error {
 	log.Printf("AddIssue: %s", t)
 	tags := []string{og.AppTag, og.AssignedTag, t.Repo}
 	tags = append(tags, t.Labels...)
+	if t.Milestone != "" {
+		tags = append(tags, fmt.Sprintf("milestone: %s", t.Milestone))
+	}
 
 	task := NewOmnifocusTask{
 		ProjectName: og.AssignedProject,
