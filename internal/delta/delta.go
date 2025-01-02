@@ -44,7 +44,7 @@ type Operation struct {
 
 // Delta returns a slice of DeltaOperations that, when applied to current,
 // will result in current containing the same items as desired.
-func Delta(desired map[string]gh.GitHubItem, current map[string]omnifocus.Task) []Operation {
+func Delta[D Keyed, C Keyed](desired map[string]D, current map[string]C) []Operation {
 	ops := []Operation{}
 
 	// If it's in desired, and not in current: add it.
