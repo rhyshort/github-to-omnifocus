@@ -9,6 +9,8 @@ package delta
 
 import (
 	"fmt"
+	"iter"
+	"slices"
 )
 
 // OperationType states whether a DeltaOperation is add or remove.
@@ -31,6 +33,7 @@ func (op OperationType) String() string {
 // identify items uniquely.
 type Keyed interface {
 	Key() string
+	GetTags() iter.Seq[string]
 }
 
 // A Operation states that Item should be added or removed from a set.
@@ -46,11 +49,27 @@ func Delta[D Keyed, C Keyed](desired map[string]D, current map[string]C) []Opera
 
 	// If it's in desired, and not in current: add it.
 	for k, v := range desired {
-		if _, ok := current[k]; !ok {
+		if c, ok := current[k]; !ok {
 			ops = append(ops, Operation{
 				Type: Add,
 				Item: v,
 			})
+		} else {
+			// confirm the tags are the same if not, remove and re-add
+			// bit of a sledge hammer to crack a nut, but
+			// it works, improvement would be to manipulate the tags
+			// ignoring "special case" tags provided in the config.
+			vTags := slices.Sorted(v.GetTags())
+			cTags := slices.Sorted(c.GetTags())
+			if slices.Compare(vTags, cTags) != 0 {
+				ops = append(ops, Operation{
+					Type: Remove,
+					Item: c,
+				}, Operation{
+					Type: Add,
+					Item: v,
+				})
+			}
 		}
 	}
 

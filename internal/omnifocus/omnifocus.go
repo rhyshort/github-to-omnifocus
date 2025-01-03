@@ -3,7 +3,9 @@ package omnifocus
 import (
 	"embed"
 	"fmt"
+	"iter"
 	"log"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -18,10 +20,10 @@ var (
 
 // Task represents a task existing in Omnifocus
 type Task struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Completed bool   `json:"completed"`
-	Tags []string `json:"tags"`
+	ID        string   `json:"id"`
+	Name      string   `json:"name"`
+	Completed bool     `json:"completed"`
+	Tags      []string `json:"tags"`
 }
 
 func (t Task) String() string {
@@ -37,6 +39,10 @@ func (t Task) Key() string {
 	// it doesn't contain spaces. We stick it as the first thing in the task's
 	// Name when we create the tasks.
 	return strings.SplitN(t.Name, " ", 2)[0] //nolint:gomnd
+}
+
+func (t Task) GetTags() iter.Seq[string] {
+	return slices.Values(t.Tags)
 }
 
 // TaskQuery defines a query to find Omnifocus tasks

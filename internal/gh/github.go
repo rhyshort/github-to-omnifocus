@@ -7,8 +7,10 @@ package gh
 import (
 	"context"
 	"fmt"
+	"iter"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/google/go-github/v41/github"
@@ -29,6 +31,10 @@ type GitHubItem struct {
 	Repo      string
 	ID        string
 	Milestone string
+}
+
+func (item GitHubItem) GetTags() iter.Seq[string] {
+	return slices.Values(item.Labels)
 }
 
 func (item GitHubItem) String() string {
