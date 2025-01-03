@@ -70,7 +70,7 @@ function tasksForProjectWithTag(
             return true
         })
         .map((task) => {
-            return { "id": task.id(), "name": task.name(), "completed": task.completed() };
+            return { "id": task.id(), "name": task.name(), "completed": task.completed(), "tags": task.tags().map(tag => tag.name()) };
         });
 }
 

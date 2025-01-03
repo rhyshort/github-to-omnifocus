@@ -9,9 +9,6 @@ package delta
 
 import (
 	"fmt"
-
-	"github.com/rhyshort/github-to-omnifocus/internal/gh"
-	"github.com/rhyshort/github-to-omnifocus/internal/omnifocus"
 )
 
 // OperationType states whether a DeltaOperation is add or remove.

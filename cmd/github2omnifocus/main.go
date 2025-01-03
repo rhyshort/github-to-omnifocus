@@ -98,13 +98,13 @@ func sync_github(c internal.GithubConfig) {
 	log.Printf("Found %d changes to apply to Issues", len(d))
 	for _, d := range d {
 		if d.Type == delta.Add {
-			err := og.AddIssue(*(d.Item.(*gh.GitHubItem)))
+			err := og.AddIssue((d.Item.(gh.GitHubItem)))
 			if err != nil {
 				// should never fail
 				log.Fatal(err)
 			}
 		} else if d.Type == delta.Remove {
-			err := og.CompleteIssue(*(d.Item.(*omnifocus.Task)))
+			err := og.CompleteIssue((d.Item.(omnifocus.Task)))
 			if err != nil {
 				// should never fail
 				log.Fatal(err)
@@ -116,13 +116,13 @@ func sync_github(c internal.GithubConfig) {
 	log.Printf("Found %d changes to apply to PRs", len(d))
 	for _, d := range d {
 		if d.Type == delta.Add {
-			err := og.AddPR(*(d.Item.(*gh.GitHubItem)))
+			err := og.AddPR((d.Item.(gh.GitHubItem)))
 			if err != nil {
 				// should never fail
 				log.Fatal(err)
 			}
 		} else if d.Type == delta.Remove {
-			err := og.CompletePR(*(d.Item.(*omnifocus.Task)))
+			err := og.CompletePR((d.Item.(omnifocus.Task)))
 			if err != nil {
 				// should never fail
 				log.Fatal(err)
@@ -134,13 +134,13 @@ func sync_github(c internal.GithubConfig) {
 	log.Printf("Found %d changes to apply to PRs", len(d))
 	for _, d := range d {
 		if d.Type == delta.Add {
-			err := og.AddAuthoredPR(*(d.Item.(*gh.GitHubItem)))
+			err := og.AddAuthoredPR((d.Item.(gh.GitHubItem)))
 			if err != nil {
 				// should never fail
 				log.Fatal(err)
 			}
 		} else if d.Type == delta.Remove {
-			err := og.CompletePR(*(d.Item.(*omnifocus.Task)))
+			err := og.CompletePR((d.Item.(omnifocus.Task)))
 			if err != nil {
 				// should never fail
 				log.Fatal(err)
@@ -152,13 +152,13 @@ func sync_github(c internal.GithubConfig) {
 	log.Printf("Found %d changes to apply to Notifications", len(d))
 	for _, d := range d {
 		if d.Type == delta.Add {
-			err := og.AddNotification(*(d.Item.(*gh.GitHubItem)))
+			err := og.AddNotification((d.Item.(gh.GitHubItem)))
 			if err != nil {
 				// should never fail
 				log.Fatal(err)
 			}
 		} else if d.Type == delta.Remove {
-			err := og.CompleteNotification(*(d.Item.(*omnifocus.Task)))
+			err := og.CompleteNotification((d.Item.(omnifocus.Task)))
 			if err != nil {
 				// should never fail
 				log.Fatal(err)

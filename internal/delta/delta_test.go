@@ -14,13 +14,13 @@ func (mk *MockKeyed) Key() string {
 }
 
 func TestDelta1NoChange(t *testing.T) {
-	current := map[Keyed]struct{}{
-		&MockKeyed{key: "foo"}: {},
-		&MockKeyed{key: "bar"}: {},
+	current := map[string]Keyed{
+		"foo": &MockKeyed{key: "foo"},
+		"bar": &MockKeyed{key: "bar"},
 	}
-	desired := map[Keyed]struct{}{
-		&MockKeyed{key: "foo"}: {},
-		&MockKeyed{key: "bar"}: {},
+	desired := map[string]Keyed{
+		"foo": &MockKeyed{key: "foo"},
+		"bar": &MockKeyed{key: "bar"},
 	}
 	ops := Delta(desired, current)
 	if len(ops) != 0 {
@@ -29,12 +29,12 @@ func TestDelta1NoChange(t *testing.T) {
 }
 
 func TestDelta2AddItem(t *testing.T) {
-	current := map[Keyed]struct{}{
-		&MockKeyed{key: "bar"}: {},
+	current := map[string]Keyed{
+		"bar": &MockKeyed{key: "bar"},
 	}
-	desired := map[Keyed]struct{}{
-		&MockKeyed{key: "foo"}: {},
-		&MockKeyed{key: "bar"}: {},
+	desired := map[string]Keyed{
+		"foo": &MockKeyed{key: "foo"},
+		"bar": &MockKeyed{key: "bar"},
 	}
 	ops := Delta(desired, current)
 	if len(ops) != 1 {
@@ -49,12 +49,12 @@ func TestDelta2AddItem(t *testing.T) {
 }
 
 func TestDelta3RemoveItem(t *testing.T) {
-	current := map[Keyed]struct{}{
-		&MockKeyed{key: "foo"}: {},
-		&MockKeyed{key: "bar"}: {},
+	current := map[string]Keyed{
+		"foo": &MockKeyed{key: "foo"},
+		"bar": &MockKeyed{key: "bar"},
 	}
-	desired := map[Keyed]struct{}{
-		&MockKeyed{key: "foo"}: {},
+	desired := map[string]Keyed{
+		"foo": &MockKeyed{key: "foo"},
 	}
 	ops := Delta(desired, current)
 	if len(ops) != 1 {
@@ -69,13 +69,13 @@ func TestDelta3RemoveItem(t *testing.T) {
 }
 
 func TestDelta4AllChange(t *testing.T) {
-	current := map[Keyed]struct{}{
-		&MockKeyed{key: "baz"}:  {},
-		&MockKeyed{key: "quux"}: {},
+	current := map[string]Keyed{
+		"baz":  &MockKeyed{key: "baz"},
+		"quux": &MockKeyed{key: "quux"},
 	}
-	desired := map[Keyed]struct{}{
-		&MockKeyed{key: "foo"}: {},
-		&MockKeyed{key: "bar"}: {},
+	desired := map[string]Keyed{
+		"foo": &MockKeyed{key: "foo"},
+		"bar": &MockKeyed{key: "bar"},
 	}
 	ops := Delta(desired, current)
 	if len(ops) != 4 {
@@ -116,8 +116,8 @@ func TestDelta4AllChange(t *testing.T) {
 }
 
 func TestDeltaNoItems(t *testing.T) {
-	current := map[Keyed]struct{}{}
-	desired := map[Keyed]struct{}{}
+	current := map[string]Keyed{}
+	desired := map[string]Keyed{}
 	ops := Delta(desired, current)
 	if len(ops) != 0 {
 		t.Fatal("Did not receive empty operations slice")
