@@ -34,11 +34,15 @@ type GitHubItem struct {
 }
 
 func (item GitHubItem) GetTags() iter.Seq[string] {
-	return slices.Values(item.Labels)
+	if item.Milestone != "" {
+		return slices.Values(append(item.Labels, item.Repo, fmt.Sprintf("milestone: %s", item.Milestone)))
+	} else {
+		return slices.Values(append(item.Labels, item.Repo))
+	}
 }
 
 func (item GitHubItem) String() string {
-	return fmt.Sprintf("GitHubItem: [%s] %s (%s)", item.Key(), item.Title, item.HTMLURL)
+	return fmt.Sprintf("GitHubItem: [%s] %s %s (%s)", item.Key(), item.Title, slices.Collect(item.GetTags()), item.HTMLURL)
 }
 
 // Key meets the Keyed interface used for creating delta operations in

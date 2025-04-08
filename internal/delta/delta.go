@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"iter"
 	"slices"
+	"strings"
 )
 
 // OperationType states whether a DeltaOperation is add or remove.
@@ -44,8 +45,9 @@ type Operation struct {
 
 // Delta returns a slice of DeltaOperations that, when applied to current,
 // will result in current containing the same items as desired.
-func Delta[D Keyed, C Keyed](desired map[string]D, current map[string]C) []Operation {
+func Delta[D Keyed, C Keyed](desired map[string]D, current map[string]C, ignoreTags []string) []Operation {
 	ops := []Operation{}
+	ignoreTags = toLower(ignoreTags)
 
 	// If it's in desired, and not in current: add it.
 	for k, v := range desired {
@@ -59,9 +61,23 @@ func Delta[D Keyed, C Keyed](desired map[string]D, current map[string]C) []Opera
 			// bit of a sledge hammer to crack a nut, but
 			// it works, improvement would be to manipulate the tags
 			// ignoring "special case" tags provided in the config.
-			vTags := slices.Sorted(v.GetTags())
-			cTags := slices.Sorted(c.GetTags())
+			// these special case include GHE assigned etc
+			// these aren't actually available
+			// on the task or the github issue, but from config.
+			// further improvement would be to add a new operation type to modify existing
+			// tasks
+
+			cTags := slices.Sorted(deleteFunc(lower(c.GetTags()),func(s string) bool {
+				return slices.Contains(ignoreTags, s)
+			}))
+
+			vTags := slices.Sorted(lower(v.GetTags()))
+			// casing can break this, so we should set all cases to lower for the
+			// comparsion
 			if slices.Compare(vTags, cTags) != 0 {
+				// introduce a new op, "modify"
+				// so we can update things inline, and not lose
+				// note content etc etc
 				ops = append(ops, Operation{
 					Type: Remove,
 					Item: c,
@@ -84,4 +100,46 @@ func Delta[D Keyed, C Keyed](desired map[string]D, current map[string]C) []Opera
 	}
 
 	return ops
+}
+
+func deleteFunc(itr iter.Seq[string], del func(string) bool) iter.Seq[string]{
+	return func(yield func(string) bool) {
+		next, stop := iter.Pull(itr)
+		defer stop()
+		for {
+			v, ok := next()
+			if !ok {
+				return
+			}
+			if !del(v) {
+				if !yield(v) {
+					return
+				}
+			}
+		}
+	}
+}
+
+func lower(itr iter.Seq[string]) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		next, stop := iter.Pull(itr)
+		defer stop()
+		for {
+			v, ok := next()
+			if !ok {
+				return
+			}
+			if !yield(strings.ToLower(v)) {
+				return
+			}
+		}
+	}
+}
+
+func toLower(s []string) []string {
+	lowered := []string{}
+	for _, v := range s {
+		lowered = append(lowered, strings.ToLower(v))
+	}
+	return lowered
 }

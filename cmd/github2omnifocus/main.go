@@ -42,6 +42,7 @@ func main() {
 
 func sync_github(c internal.GithubConfig) {
 
+	ignoreTags := []string{c.AppTag, c.AssignedTag, c.ReviewTag, c.NotificationTag, c.PendingChangesTag, "no action"}
 	// The due date we use is "end of today" which is 5pm local.
 	dueDate := time.Now().Local()
 	dueDate = time.Date(
@@ -94,7 +95,7 @@ func sync_github(c internal.GithubConfig) {
 	// thing that generics will make easier as we can better smuggle the
 	// types through Delta rather than using the interface.
 
-	d := delta.Delta(toSet(desiredState.Issues), toSet(currentState.Issues))
+	d := delta.Delta(toSet(desiredState.Issues), toSet(currentState.Issues), ignoreTags)
 	log.Printf("Found %d changes to apply to Issues", len(d))
 	for _, d := range d {
 		if d.Type == delta.Add {
@@ -112,7 +113,7 @@ func sync_github(c internal.GithubConfig) {
 		}
 	}
 
-	d = delta.Delta(toSet(desiredState.PRs), toSet(currentState.PRs))
+	d = delta.Delta(toSet(desiredState.PRs), toSet(currentState.PRs), ignoreTags)
 	log.Printf("Found %d changes to apply to PRs", len(d))
 	for _, d := range d {
 		if d.Type == delta.Add {
@@ -130,7 +131,7 @@ func sync_github(c internal.GithubConfig) {
 		}
 	}
 
-	d = delta.Delta(toSet(desiredState.AuthoredPRs), toSet(currentState.AuthoredPRs))
+	d = delta.Delta(toSet(desiredState.AuthoredPRs), toSet(currentState.AuthoredPRs), ignoreTags)
 	log.Printf("Found %d changes to apply to PRs", len(d))
 	for _, d := range d {
 		if d.Type == delta.Add {
@@ -148,7 +149,7 @@ func sync_github(c internal.GithubConfig) {
 		}
 	}
 
-	d = delta.Delta(toSet(desiredState.Notifications), toSet(currentState.Notifications))
+	d = delta.Delta(toSet(desiredState.Notifications), toSet(currentState.Notifications), ignoreTags)
 	log.Printf("Found %d changes to apply to Notifications", len(d))
 	for _, d := range d {
 		if d.Type == delta.Add {

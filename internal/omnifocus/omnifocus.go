@@ -27,7 +27,7 @@ type Task struct {
 }
 
 func (t Task) String() string {
-	return fmt.Sprintf("OmnifocusTask: [%s] %s", t.Key(), t.Name)
+	return fmt.Sprintf("OmnifocusTask: [%s] %s %s", t.Key(), t.Name, slices.Collect(t.GetTags()))
 }
 
 // Key meets the Keyed interface used for creating delta operations in
@@ -128,7 +128,7 @@ func (og *Gateway) GetNotifications() ([]Task, error) {
 func (og *Gateway) AddIssue(t gh.GitHubItem) error {
 	log.Printf("AddIssue: %s", t)
 	tags := []string{og.AppTag, og.AssignedTag, t.Repo}
-	tags = append(tags, t.Labels...)
+	tags = slices.AppendSeq(tags, t.GetTags())
 	if t.Milestone != "" {
 		tags = append(tags, fmt.Sprintf("milestone: %s", t.Milestone))
 	}
@@ -208,7 +208,7 @@ func (og *Gateway) AddPR(t gh.GitHubItem) error {
 	log.Printf("AddPR: %s", t)
 	tags := []string{og.AppTag, og.ReviewTag}
 	tags = append(tags, t.Labels...)
-	tags = append(tags, t.Repo)
+	tags = slices.AppendSeq(tags, t.GetTags())
 	_, err := AddNewOmnifocusTask(NewOmnifocusTask{
 		ProjectName: og.ReviewProject,
 		Name:        t.Key() + " " + t.Title,
@@ -225,7 +225,7 @@ func (og *Gateway) AddAuthoredPR(t gh.GitHubItem) error {
 	log.Printf("AddAuhtoredPR: %s", t)
 	tags := []string{og.AppTag, og.PendingChangesTag}
 	tags = append(tags, t.Labels...)
-	tags = append(tags, t.Repo)
+	tags = slices.AppendSeq(tags, t.GetTags())
 	_, err := AddNewOmnifocusTask(NewOmnifocusTask{
 		ProjectName: og.PendingChangesProject,
 		Tags:        tags,
