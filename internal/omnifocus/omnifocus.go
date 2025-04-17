@@ -297,9 +297,20 @@ func getEndOfTimePeriod(period string) (int64, error) {
 		month := (3 * num) + 1
 		return time.Date(t.Year(), time.Month(month), 1, -1, -1, -1, -1, time.Local).UnixMilli(), nil
 	case "W":
+		// ISO weeks always start on monday, sometimes this means the start of the week can be
+		// in the previous year
 		day := (7 * num) + 1
-		//TODO: adjust time for work days
-		return time.Date(t.Year(), time.January, day, -1, -1, -1, -1, time.Local).UnixMilli(), nil
+		proposed := time.Date(t.Year(), time.January, day, -1, -1, -1, -1, time.Local)
+		// roll the time back to previous friday
+		// obvs we can "pre-compute" and use a switch to pull iot back the right numbers
+		// but this is less code
+		for {
+			if proposed.Weekday() == time.Friday {
+				break
+			}
+			proposed = proposed.AddDate(0, 0, -1)
+		}
+		return proposed.UnixMilli(), nil
 
 	}
 	return -1, fmt.Errorf("Failed to calculate time increment")
