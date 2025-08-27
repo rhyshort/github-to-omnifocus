@@ -18,6 +18,10 @@ var (
 	jxa embed.FS
 )
 
+const (
+	MILESTONE_DATE_FORMAT = "2 January 2006"
+)
+
 // Task represents a task existing in Omnifocus
 type Task struct {
 	ID        string   `json:"id"`
@@ -141,10 +145,20 @@ func (og *Gateway) AddIssue(t gh.GitHubItem) error {
 	}
 
 	if og.SetTaskmasterDueDate && og.isTaskMasterTask(task) {
-		// attempt to set a TM due date
-		deadline, err := og.deadline(tags)
-		if err == nil {
-			task.DueDateMS = deadline
+		// Milestones are two week sprints, some tasks are weekly, only tag with milestone due date, if present _and_
+		// doesn't have a specific week tag.
+		if t.Milestone != "" && !slices.ContainsFunc(tags, func(tag string) bool { return strings.HasSuffix(tag, "W") }) {
+			// set date from milestone
+			deadline, err := og.deadlineFromMilestone(t.Milestone)
+			if err == nil {
+				task.DueDateMS = deadline
+			}
+		} else {
+			// attempt to set a TM due date
+			deadline, err := og.deadline(tags)
+			if err == nil {
+				task.DueDateMS = deadline
+			}
 		}
 	}
 
@@ -162,6 +176,18 @@ func (og *Gateway) isTaskMasterTask(task NewOmnifocusTask) bool {
 		}
 	}
 	return false
+}
+
+func (og *Gateway) deadlineFromMilestone(milestone string) (int64, error) {
+	end := strings.Split(milestone, "->")[1]
+	idx := strings.Index(end, "(")
+	date := end[:idx]
+	date = strings.TrimSpace(date)
+	t, err := time.Parse(MILESTONE_DATE_FORMAT, date)
+	if err != nil {
+		return -1, err
+	}
+	return t.UnixMilli(), nil
 }
 
 func (og *Gateway) deadline(tags []string) (int64, error) {
