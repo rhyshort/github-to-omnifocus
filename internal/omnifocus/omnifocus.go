@@ -19,7 +19,8 @@ var (
 )
 
 const (
-	MILESTONE_DATE_FORMAT = "2 January 2006"
+	SPRINT_MILESTONE_DATE_FORMAT = "2 January 2006"
+	MILESTONE_YEAR_MONTH_FORMAT  = "2006-01"
 )
 
 // Task represents a task existing in Omnifocus
@@ -144,7 +145,7 @@ func (og *Gateway) AddIssue(t gh.GitHubItem) error {
 		Note:        t.HTMLURL,
 	}
 
-	if og.SetTaskmasterDueDate && og.isTaskMasterTask(task) {
+	if og.SetTaskmasterDueDate {
 		// Milestones are two week sprints, some tasks are weekly, only tag with milestone due date, if present _and_
 		// doesn't have a specific week tag.
 		if t.Milestone != "" && !slices.ContainsFunc(tags, func(tag string) bool { return strings.HasSuffix(tag, "W") }) {
@@ -179,15 +180,23 @@ func (og *Gateway) isTaskMasterTask(task NewOmnifocusTask) bool {
 }
 
 func (og *Gateway) deadlineFromMilestone(milestone string) (int64, error) {
-	end := strings.Split(milestone, "->")[1]
-	idx := strings.Index(end, "(")
-	date := end[:idx]
-	date = strings.TrimSpace(date)
-	t, err := time.Parse(MILESTONE_DATE_FORMAT, date)
-	if err != nil {
-		return -1, err
+	if strings.Contains(milestone, "->") {
+		end := strings.Split(milestone, "->")[1]
+		idx := strings.Index(end, "(")
+		date := end[:idx]
+		date = strings.TrimSpace(date)
+		t, err := time.Parse(SPRINT_MILESTONE_DATE_FORMAT, date)
+		if err != nil {
+			return -1, err
+		}
+		return t.UnixMilli(), nil
+	} else {
+		t, err := time.Parse(MILESTONE_YEAR_MONTH_FORMAT, milestone)
+		if err != nil {
+			return -1, err
+		}
+		return getEndOfMonth(t.Month()), nil
 	}
-	return t.UnixMilli(), nil
 }
 
 func (og *Gateway) deadline(tags []string) (int64, error) {
@@ -344,5 +353,6 @@ func getEndOfTimePeriod(period string) (int64, error) {
 
 func getEndOfMonth(month time.Month) int64 {
 	t := time.Now()
-	return time.Date(t.Year(), month+1, 1, -1, -1, -1, -1, time.Local).UnixMilli()
+	lastDay := time.Date(t.Year(), month+1, 0, 0, 0, 0, 0, t.Location())
+	return lastDay.UnixMilli()
 }
